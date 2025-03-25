@@ -1,21 +1,19 @@
 import pygame
 import numpy as np
 import sys
-from ui import Button, InputBox
+from ui import GlassButton, ModernInputBox, main_font, title_font, draw_background
 from geometry import Transformation, project_point, transform_vertices
 from constants import (
     WIDTH,
     HEIGHT,
     WHITE,
-    BLACK,
-    RED,
-    GREEN,
-    BLUE,
-    GRAY,
+    ACCENT_PRIMARY,
+    TEXT_COLOR,
     CAMERA_DISTANCE,
     SCALE,
     INITIAL_VERTICES,
     EDGES,
+    RED
 )
 
 
@@ -28,7 +26,7 @@ def main():
     pygame.display.set_caption("3D Matrix Transformation")
 
     # Font setup
-    font = pygame.font.SysFont("Arial", 16)
+
 
     # Convert vertices to numpy array
     initial_vertices = np.array(INITIAL_VERTICES, dtype=float)
@@ -38,28 +36,34 @@ def main():
 
     # Object state
     transformations = []
-
-    add_transform_button = Button(10, 10, 180, 30, "Add Transformation", GREEN)
-    scale_button = Button(200, 10, 100, 30, "Scale", BLUE)
-    rotate_x_button = Button(310, 10, 100, 30, "Rotate X", BLUE)
-    rotate_y_button = Button(420, 10, 100, 30, "Rotate Y", BLUE)
-    rotate_z_button = Button(530, 10, 100, 30, "Rotate Z", BLUE)
-    translate_button = Button(640, 10, 100, 30, "Translate", BLUE)
+    
+    # UI Elements
+    add_transform_button = GlassButton(20, 20, 200, 50, "Add Transformation")
+    
+    # Transform type buttons
+    scale_button = GlassButton(250, 20, 120, 40, "Scale")
+    rotate_x_button = GlassButton(380, 20, 120, 40, "Rotate X")
+    rotate_y_button = GlassButton(510, 20, 120, 40, "Rotate Y")
+    rotate_z_button = GlassButton(640, 20, 120, 40, "Rotate Z")
+    translate_button = GlassButton(770, 20, 120, 40, "Translate")
 
     input_boxes = {
-        "scale_x": InputBox(200, 50, 60, 30, "1.0"),
-        "scale_y": InputBox(270, 50, 60, 30, "1.0"),
-        "scale_z": InputBox(340, 50, 60, 30, "1.0"),
-        "rotate_angle": InputBox(200, 50, 60, 30, "45.0"),
-        "translate_x": InputBox(200, 50, 60, 30, "0.5"),
-        "translate_y": InputBox(270, 50, 60, 30, "0.5"),
-        "translate_z": InputBox(340, 50, 60, 30, "0.5"),
+        "scale_x": ModernInputBox(250, 70, 80, 35, placeholder="X"),
+        "scale_y": ModernInputBox(340, 70, 80, 35, placeholder="Y"),
+        "scale_z": ModernInputBox(430, 70, 80, 35, placeholder="Z"),
+        
+        "rotate_angle": ModernInputBox(250, 70, 120, 35, placeholder="Angle"),
+        
+        "translate_x": ModernInputBox(250, 70, 80, 35, placeholder="X"),
+        "translate_y": ModernInputBox(340, 70, 80, 35, placeholder="Y"),
+        "translate_z": ModernInputBox(430, 70, 80, 35, placeholder="Z"),
     }
 
-    apply_button = Button(200, 90, 100, 30, "Apply", GREEN)
+    apply_button = GlassButton(520, 70, 100, 35, "Apply")
 
     current_transform_type = None
 
+    # Auto-rotation
     auto_rotate = True
     rotation_angle = 0
 
@@ -91,9 +95,9 @@ def main():
                     new_transform = Transformation(
                         "scale",
                         {
-                            "x": input_boxes["scale_x"].text,
-                            "y": input_boxes["scale_y"].text,
-                            "z": input_boxes["scale_z"].text,
+                            "x": input_boxes["scale_x"].text or "1.0",
+                            "y": input_boxes["scale_y"].text or "1.0",
+                            "z": input_boxes["scale_z"].text or "1.0",
                         },
                     )
                     transformations.append(new_transform)
@@ -101,7 +105,7 @@ def main():
                 elif current_transform_type.startswith("rotate"):
                     new_transform = Transformation(
                         current_transform_type,
-                        {"angle": input_boxes["rotate_angle"].text},
+                        {"angle": input_boxes["rotate_angle"].text or "45.0"},
                     )
                     transformations.append(new_transform)
 
@@ -109,9 +113,9 @@ def main():
                     new_transform = Transformation(
                         "translate",
                         {
-                            "x": input_boxes["translate_x"].text,
-                            "y": input_boxes["translate_y"].text,
-                            "z": input_boxes["translate_z"].text,
+                            "x": input_boxes["translate_x"].text or "0.5",
+                            "y": input_boxes["translate_y"].text or "0.5",
+                            "z": input_boxes["translate_z"].text or "0.5",
                         },
                     )
                     transformations.append(new_transform)
@@ -120,7 +124,7 @@ def main():
                 box.handle_event(event)
 
             for i, transform in enumerate(transformations):
-                delete_button_rect = pygame.Rect(WIDTH - 40, 150 + i * 30, 30, 20)
+                delete_button_rect = pygame.Rect(WIDTH - 40, 200 + i * 30, 30, 20)
                 if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                     if delete_button_rect.collidepoint(event.pos):
                         transformations.pop(i)
@@ -134,50 +138,50 @@ def main():
             if rotation_angle >= 360:
                 rotation_angle = 0
 
-        screen.fill(WHITE)
+        draw_background(screen)
 
-        add_transform_button.draw(screen, font)
-        scale_button.draw(screen, font)
-        rotate_x_button.draw(screen, font)
-        rotate_y_button.draw(screen, font)
-        rotate_z_button.draw(screen, font)
-        translate_button.draw(screen, font)
+        add_transform_button.draw(screen)
+        scale_button.draw(screen)
+        rotate_x_button.draw(screen)
+        rotate_y_button.draw(screen)
+        rotate_z_button.draw(screen)
+        translate_button.draw(screen)
 
         if current_transform_type == "scale":
-            text_surf = font.render("Scale (X, Y, Z):", True, BLACK)
-            screen.blit(text_surf, (10, 60))
-            input_boxes["scale_x"].draw(screen, font)
-            input_boxes["scale_y"].draw(screen, font)
-            input_boxes["scale_z"].draw(screen, font)
-            apply_button.draw(screen, font)
+            text_surf = main_font.render("Scale (X, Y, Z):", True, TEXT_COLOR)
+            screen.blit(text_surf, (20, 80))
+            input_boxes["scale_x"].draw(screen)
+            input_boxes["scale_y"].draw(screen)
+            input_boxes["scale_z"].draw(screen)
+            apply_button.draw(screen)
 
         elif current_transform_type and current_transform_type.startswith("rotate"):
             axis = current_transform_type.split("_")[1].upper()
-            text_surf = font.render(f"Rotate {axis} (degrees):", True, BLACK)
-            screen.blit(text_surf, (10, 60))
-            input_boxes["rotate_angle"].draw(screen, font)
-            apply_button.draw(screen, font)
+            text_surf = main_font.render(f"Rotate {axis} (degrees):", True, TEXT_COLOR)
+            screen.blit(text_surf, (20, 80))
+            input_boxes["rotate_angle"].draw(screen)
+            apply_button.draw(screen)
 
         elif current_transform_type == "translate":
-            text_surf = font.render("Translate (X, Y, Z):", True, BLACK)
-            screen.blit(text_surf, (10, 60))
-            input_boxes["translate_x"].draw(screen, font)
-            input_boxes["translate_y"].draw(screen, font)
-            input_boxes["translate_z"].draw(screen, font)
-            apply_button.draw(screen, font)
+            text_surf = main_font.render("Translate (X, Y, Z):", True, TEXT_COLOR)
+            screen.blit(text_surf, (20, 80))
+            input_boxes["translate_x"].draw(screen)
+            input_boxes["translate_y"].draw(screen)
+            input_boxes["translate_z"].draw(screen)
+            apply_button.draw(screen)
 
-        text_surf = font.render("Applied Transformations:", True, BLACK)
-        screen.blit(text_surf, (10, 130))
+        text_surf = main_font.render("Applied Transformations:", True, TEXT_COLOR)
+        screen.blit(text_surf, (20, 170))
 
         for i, transform in enumerate(transformations):
             text = f"{i+1}. {transform.get_display_text()}"
-            text_surf = font.render(text, True, BLACK)
-            screen.blit(text_surf, (30, 150 + i * 30))
+            text_surf = main_font.render(text, True, TEXT_COLOR)
+            screen.blit(text_surf, (40, 200 + i * 30))
 
-            delete_button_rect = pygame.Rect(WIDTH - 40, 150 + i * 30, 30, 20)
+            delete_button_rect = pygame.Rect(WIDTH - 40, 200 + i * 30, 30, 20)
             pygame.draw.rect(screen, RED, delete_button_rect)
-            text_surf = font.render("X", True, WHITE)
-            screen.blit(text_surf, (WIDTH - 30, 150 + i * 30))
+            text_surf = main_font.render("X", True, WHITE)
+            screen.blit(text_surf, (WIDTH - 30, 200 + i * 30))
 
         auto_rotation = Transformation("rotate_y", {"angle": str(rotation_angle)})
         view_transformations = transformations.copy()
@@ -197,14 +201,14 @@ def main():
 
         for edge in EDGES:
             pygame.draw.line(
-                screen, BLACK, projected_points[edge[0]], projected_points[edge[1]], 2
+                screen, ACCENT_PRIMARY, projected_points[edge[0]], projected_points[edge[1]], 2
             )
 
         for point in projected_points:
-            pygame.draw.circle(screen, RED, (int(point[0]), int(point[1])), 5)
+            pygame.draw.circle(screen, WHITE, (int(point[0]), int(point[1])), 5)
 
-        help_text = font.render("Press SPACE to toggle auto-rotation", True, BLACK)
-        screen.blit(help_text, (WIDTH - 250, HEIGHT - 30))
+        help_text = main_font.render("Press SPACE to toggle auto-rotation", True, TEXT_COLOR)
+        screen.blit(help_text, (WIDTH - 300, HEIGHT - 50))
 
         pygame.display.flip()
         clock.tick(60)

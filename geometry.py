@@ -6,6 +6,7 @@ from constants import CAMERA_DISTANCE
 
 class Transformation:
     def __init__(self, transform_type, params=None):
+        self.id = str(uuid.uuid4())[:8]
         self.type = transform_type
         self.params = params or {}
         self.matrix = np.identity(4)

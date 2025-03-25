@@ -1,5 +1,5 @@
 import pygame
-from constants import BUTTON_GLASS, BUTTON_BORDER, WHITE, BACKGROUND_GRADIENT, WIDTH, HEIGHT
+from geometry_game.constants import BUTTON_GLASS, BUTTON_BORDER, WHITE, BACKGROUND_GRADIENT, WIDTH, HEIGHT
 
 # Font setup
 pygame.font.init()

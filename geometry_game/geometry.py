@@ -1,7 +1,7 @@
 import numpy as np
 from math import sin, cos, radians
 import uuid
-from constants import CAMERA_DISTANCE
+from geometry_game.constants import CAMERA_DISTANCE
 
 
 class Transformation:

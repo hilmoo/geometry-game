@@ -1,9 +1,9 @@
 import pygame
 import numpy as np
 import sys
-from ui import GlassButton, ModernInputBox, main_font, title_font, draw_background
-from geometry import Transformation, project_point, transform_vertices
-from constants import (
+from geometry_game.ui import GlassButton, ModernInputBox, main_font, title_font, draw_background
+from geometry_game.geometry import Transformation, project_point, transform_vertices
+from geometry_game.constants import (
     WIDTH,
     HEIGHT,
     WHITE,

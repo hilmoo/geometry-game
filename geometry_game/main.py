@@ -3,14 +3,10 @@ import numpy as np
 import sys
 from geometry_game.ui import (
     GlassButton,
-    ModernInputBox,
     main_font,
-    title_font,
     draw_background,
     PopupMenu,
     PopupForm,
-    TransformButton,
-    TransformDetailForm,
     TransformListPopup,
 )
 from geometry_game.geometry import Transformation, project_point, transform_vertices
@@ -24,7 +20,6 @@ from geometry_game.constants import (
     SCALE,
     INITIAL_VERTICES,
     EDGES,
-    RED,
 )
 
 
@@ -46,8 +41,8 @@ def main():
     transformations = []
 
     # UI Elements - swap positions
-    view_transforms_button = GlassButton(20, 20, 200, 50, "Applied Transformations")
-    add_transform_button = GlassButton(20, 80, 200, 50, "Add Transformation")
+    view_transforms_button = GlassButton(20, 20, 250, 50, "Applied Transformations")
+    add_transform_button = GlassButton(20, 80, 250, 50, "Add Transformation")
 
     # Transform popup menu
     transform_menu = PopupMenu(
@@ -146,10 +141,13 @@ def main():
             # Handle transform menu
             transform_option = transform_menu.handle_event(event)
             if transform_option:
+                popup_forms[
+                    transform_option
+                ].reset_values()
                 popup_forms[transform_option].show()
                 current_popup_form = transform_option
 
-            # Handle transforms list popup - simplified to handle direct delete
+            # Handle transforms list popup
             if transform_list_popup.visible:
                 list_result = transform_list_popup.handle_event(event)
                 if list_result:
@@ -157,10 +155,8 @@ def main():
                         index = list_result.get("index")
                         if 0 <= index < len(transformations):
                             transformations.pop(index)
-                            # Update the list popup
                             transform_list_popup.update_transformations(transformations)
                     elif list_result.get("action") == "close":
-                        # Simply close the popup
                         pass
 
             # Handle form popup

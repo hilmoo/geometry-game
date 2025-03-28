@@ -1,7 +1,15 @@
 import pygame
 import numpy as np
 import sys
-from geometry_game.ui import GlassButton, ModernInputBox, main_font, title_font, draw_background
+from geometry_game.ui import (
+    GlassButton,
+    ModernInputBox,
+    main_font,
+    title_font,
+    draw_background,
+    PopupMenu,
+    PopupForm,
+)
 from geometry_game.geometry import Transformation, project_point, transform_vertices
 from geometry_game.constants import (
     WIDTH,
@@ -13,7 +21,7 @@ from geometry_game.constants import (
     SCALE,
     INITIAL_VERTICES,
     EDGES,
-    RED
+    RED,
 )
 
 
@@ -33,32 +41,84 @@ def main():
 
     # Object state
     transformations = []
-    
+
     # UI Elements
     add_transform_button = GlassButton(20, 20, 200, 50, "Add Transformation")
-    
-    # Transform type buttons
-    scale_button = GlassButton(250, 20, 120, 40, "Scale")
-    rotate_x_button = GlassButton(380, 20, 120, 40, "Rotate X")
-    rotate_y_button = GlassButton(510, 20, 120, 40, "Rotate Y")
-    rotate_z_button = GlassButton(640, 20, 120, 40, "Rotate Z")
-    translate_button = GlassButton(770, 20, 120, 40, "Translate")
 
-    input_boxes = {
-        "scale_x": ModernInputBox(250, 70, 80, 35, placeholder="X"),
-        "scale_y": ModernInputBox(340, 70, 80, 35, placeholder="Y"),
-        "scale_z": ModernInputBox(430, 70, 80, 35, placeholder="Z"),
-        
-        "rotate_angle": ModernInputBox(250, 70, 120, 35, placeholder="Angle"),
-        
-        "translate_x": ModernInputBox(250, 70, 80, 35, placeholder="X"),
-        "translate_y": ModernInputBox(340, 70, 80, 35, placeholder="Y"),
-        "translate_z": ModernInputBox(430, 70, 80, 35, placeholder="Z"),
+    # Transform popup menu
+    transform_menu = PopupMenu(
+        20, 80, 200, ["Scale", "Rotate X", "Rotate Y", "Rotate Z", "Translate"]
+    )
+
+    # Transformation forms
+    popup_forms = {
+        "Scale": PopupForm(
+            "Scale Transformation",
+            [
+                {"name": "x", "label": "Scale X:", "placeholder": "1.0", "value": "1"},
+                {"name": "y", "label": "Scale Y:", "placeholder": "1.0", "value": "1"},
+                {"name": "z", "label": "Scale Z:", "placeholder": "1.0", "value": "1"},
+            ],
+        ),
+        "Rotate X": PopupForm(
+            "Rotate X Transformation",
+            [
+                {
+                    "name": "angle",
+                    "label": "Angle (degrees):",
+                    "placeholder": "45.0",
+                    "value": "45",
+                }
+            ],
+        ),
+        "Rotate Y": PopupForm(
+            "Rotate Y Transformation",
+            [
+                {
+                    "name": "angle",
+                    "label": "Angle (degrees):",
+                    "placeholder": "45.0",
+                    "value": "45",
+                }
+            ],
+        ),
+        "Rotate Z": PopupForm(
+            "Rotate Z Transformation",
+            [
+                {
+                    "name": "angle",
+                    "label": "Angle (degrees):",
+                    "placeholder": "45.0",
+                    "value": "45",
+                }
+            ],
+        ),
+        "Translate": PopupForm(
+            "Translate Transformation",
+            [
+                {
+                    "name": "x",
+                    "label": "Translate X:",
+                    "placeholder": "0.5",
+                    "value": "0",
+                },
+                {
+                    "name": "y",
+                    "label": "Translate Y:",
+                    "placeholder": "0.5",
+                    "value": "0",
+                },
+                {
+                    "name": "z",
+                    "label": "Translate Z:",
+                    "placeholder": "0.5",
+                    "value": "0",
+                },
+            ],
+        ),
     }
 
-    apply_button = GlassButton(520, 70, 100, 35, "Apply")
-
-    current_transform_type = None
+    current_popup_form = None
 
     # Auto-rotation
     auto_rotate = True
@@ -69,57 +129,74 @@ def main():
             if event.type == pygame.QUIT:
                 running = False
 
+            # Add debug information for button click
             if add_transform_button.is_clicked(event):
-                current_transform_type = None
+                print("Add transform button clicked!")  # Debug output
+                transform_menu.show()
 
-            if scale_button.is_clicked(event):
-                current_transform_type = "scale"
+            # Handle transform menu
+            transform_option = transform_menu.handle_event(event)
+            if transform_option:
+                print(f"Selected option: {transform_option}")  # Debug output
+                popup_forms[transform_option].show()
+                current_popup_form = transform_option
+                print(
+                    f"Showing form: {current_popup_form}, Visible: {popup_forms[transform_option].visible}"
+                )  # Debug
 
-            if rotate_x_button.is_clicked(event):
-                current_transform_type = "rotate_x"
+            # Handle form popup
+            if current_popup_form:
+                print(
+                    f"Current form: {current_popup_form}, Visible: {popup_forms[current_popup_form].visible}"
+                )  # Debug
+                form_result = popup_forms[current_popup_form].handle_event(event)
+                if form_result and form_result.get("action") == "apply":
+                    print(f"Form applied: {form_result}")  # Debug
+                    values = form_result.get("values", {})
 
-            if rotate_y_button.is_clicked(event):
-                current_transform_type = "rotate_y"
+                    if current_popup_form == "Scale":
+                        new_transform = Transformation(
+                            "scale",
+                            {
+                                "x": values.get("x", "1"),
+                                "y": values.get("y", "1"),
+                                "z": values.get("z", "1"),
+                            },
+                        )
+                        transformations.append(new_transform)
 
-            if rotate_z_button.is_clicked(event):
-                current_transform_type = "rotate_z"
+                    elif current_popup_form == "Rotate X":
+                        new_transform = Transformation(
+                            "rotate_x", {"angle": values.get("angle", "45")}
+                        )
+                        transformations.append(new_transform)
 
-            if translate_button.is_clicked(event):
-                current_transform_type = "translate"
+                    elif current_popup_form == "Rotate Y":
+                        new_transform = Transformation(
+                            "rotate_y", {"angle": values.get("angle", "45")}
+                        )
+                        transformations.append(new_transform)
 
-            if apply_button.is_clicked(event) and current_transform_type:
-                if current_transform_type == "scale":
-                    new_transform = Transformation(
-                        "scale",
-                        {
-                            "x": input_boxes["scale_x"].text or "1.0",
-                            "y": input_boxes["scale_y"].text or "1.0",
-                            "z": input_boxes["scale_z"].text or "1.0",
-                        },
-                    )
-                    transformations.append(new_transform)
+                    elif current_popup_form == "Rotate Z":
+                        new_transform = Transformation(
+                            "rotate_z", {"angle": values.get("angle", "45")}
+                        )
+                        transformations.append(new_transform)
 
-                elif current_transform_type.startswith("rotate"):
-                    new_transform = Transformation(
-                        current_transform_type,
-                        {"angle": input_boxes["rotate_angle"].text or "45.0"},
-                    )
-                    transformations.append(new_transform)
+                    elif current_popup_form == "Translate":
+                        new_transform = Transformation(
+                            "translate",
+                            {
+                                "x": values.get("x", "0"),
+                                "y": values.get("y", "0"),
+                                "z": values.get("z", "0"),
+                            },
+                        )
+                        transformations.append(new_transform)
 
-                elif current_transform_type == "translate":
-                    new_transform = Transformation(
-                        "translate",
-                        {
-                            "x": input_boxes["translate_x"].text or "0.5",
-                            "y": input_boxes["translate_y"].text or "0.5",
-                            "z": input_boxes["translate_z"].text or "0.5",
-                        },
-                    )
-                    transformations.append(new_transform)
+                    current_popup_form = None
 
-            for box_name, box in input_boxes.items():
-                box.handle_event(event)
-
+            # Delete transformation buttons
             for i, transform in enumerate(transformations):
                 delete_button_rect = pygame.Rect(WIDTH - 40, 200 + i * 30, 30, 20)
                 if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
@@ -135,38 +212,13 @@ def main():
             if rotation_angle >= 360:
                 rotation_angle = 0
 
+        # Drawing
         draw_background(screen)
 
+        # Draw regular UI elements first
         add_transform_button.draw(screen)
-        scale_button.draw(screen)
-        rotate_x_button.draw(screen)
-        rotate_y_button.draw(screen)
-        rotate_z_button.draw(screen)
-        translate_button.draw(screen)
 
-        if current_transform_type == "scale":
-            text_surf = main_font.render("Scale (X, Y, Z):", True, TEXT_COLOR)
-            screen.blit(text_surf, (20, 80))
-            input_boxes["scale_x"].draw(screen)
-            input_boxes["scale_y"].draw(screen)
-            input_boxes["scale_z"].draw(screen)
-            apply_button.draw(screen)
-
-        elif current_transform_type and current_transform_type.startswith("rotate"):
-            axis = current_transform_type.split("_")[1].upper()
-            text_surf = main_font.render(f"Rotate {axis} (degrees):", True, TEXT_COLOR)
-            screen.blit(text_surf, (20, 80))
-            input_boxes["rotate_angle"].draw(screen)
-            apply_button.draw(screen)
-
-        elif current_transform_type == "translate":
-            text_surf = main_font.render("Translate (X, Y, Z):", True, TEXT_COLOR)
-            screen.blit(text_surf, (20, 80))
-            input_boxes["translate_x"].draw(screen)
-            input_boxes["translate_y"].draw(screen)
-            input_boxes["translate_z"].draw(screen)
-            apply_button.draw(screen)
-
+        # Draw transformations list
         text_surf = main_font.render("Applied Transformations:", True, TEXT_COLOR)
         screen.blit(text_surf, (20, 170))
 
@@ -180,6 +232,7 @@ def main():
             text_surf = main_font.render("X", True, WHITE)
             screen.blit(text_surf, (WIDTH - 30, 200 + i * 30))
 
+        # Apply transformations and render the 3D object
         auto_rotation = Transformation("rotate_y", {"angle": str(rotation_angle)})
         view_transformations = transformations.copy()
         if auto_rotate:
@@ -198,14 +251,26 @@ def main():
 
         for edge in EDGES:
             pygame.draw.line(
-                screen, ACCENT_PRIMARY, projected_points[edge[0]], projected_points[edge[1]], 2
+                screen,
+                ACCENT_PRIMARY,
+                projected_points[edge[0]],
+                projected_points[edge[1]],
+                2,
             )
 
         for point in projected_points:
             pygame.draw.circle(screen, WHITE, (int(point[0]), int(point[1])), 5)
 
-        help_text = main_font.render("Press SPACE to toggle auto-rotation", True, TEXT_COLOR)
+        help_text = main_font.render(
+            "Press SPACE to toggle auto-rotation", True, TEXT_COLOR
+        )
         screen.blit(help_text, (WIDTH - 300, HEIGHT - 50))
+
+        # Draw popups last to ensure they appear on top of everything else
+        transform_menu.draw(screen)
+
+        if current_popup_form and popup_forms[current_popup_form].visible:
+            popup_forms[current_popup_form].draw(screen)
 
         pygame.display.flip()
         clock.tick(60)

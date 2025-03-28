@@ -15,3 +15,8 @@ start = "geometry_game"
 
 [tool.uv]
 package = true
+
+[dependency-groups]
+dev = [
+    "nuitka>=2.6.8",
+]

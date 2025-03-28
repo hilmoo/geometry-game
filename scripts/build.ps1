@@ -1,0 +1,1 @@
+nuitka  --mode=onefile --windows-console-mode=disable --output-dir=build --output-filename=geometry_game ./geometry_game/main.py

@@ -28,16 +28,10 @@ jobs:
           python-version-file: "pyproject.toml"
 
       - name: Install the project
-        run: uv sync
+        run: uv sync --dev
 
-      - uses: Nuitka/Nuitka-Action@main
-        with:
-          nuitka-version: main
-          script-name: ./geometry_game/
-          mode: onefile
-          output-dir: build
-          output-file: geometry-game_${{ inputs.tag_name }}.exe
-          windows-console-mode: disable
+      - name: Build the project
+        run: python -m nuitka --onefile --onefile-no-compression --assume-yes-for-downloads --windows-console-mode=disable --output-dir=build --output-filename="geometry-game_${{ inputs.tag_name }}.exe" ./geometry_game/main.py
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2

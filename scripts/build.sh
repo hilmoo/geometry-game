@@ -1,1 +1,0 @@
-nuitka  --onefile --windows-console-mode=disable ./geometry_game/

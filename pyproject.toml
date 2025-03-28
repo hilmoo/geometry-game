@@ -4,9 +4,15 @@ version = "0.1.1"
 description = "Added version management and implement modularity"
 readme = "README.md"
 requires-python = ">=3.12"
+
 dependencies = [
     "numpy>=2.2.4",
     "pygame>=2.6.1",
+]
+
+[dependency-groups]
+dev = [
+    "nuitka>=2.6.8",
 ]
 
 [tool.pdm.scripts]

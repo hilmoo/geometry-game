@@ -9,8 +9,11 @@ on:
         type: string
         description: "The tag name to release"
 
+permissions:
+  contents: write
+
 jobs:
-  build:
+  build-release:
     runs-on: windows-latest
 
     steps:

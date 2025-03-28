@@ -1,0 +1,39 @@
+name: Build and Release
+run-name: release-${{ inputs.tag_name }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        required: true
+        type: string
+        description: "The tag name to release"
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version-file: "pyproject.toml"
+
+      - name: Install the project
+        run: uv sync --all-groups
+
+      - name: Build the project
+        run: nuitka --onefile --windows-console-mode=disable --output-dir=build --output-filename=geometry-game_${{ inputs.tag_name }}.exe ./geometry_game/
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ inputs.tag_name }}
+          files: build/geometry-game_${{ inputs.tag_name }}.exe
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

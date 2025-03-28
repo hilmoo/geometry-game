@@ -11,7 +11,7 @@ dependencies = [
 ]
 
 [dependency-groups]
-dev = [
+build = [
     "nuitka>=2.6.8",
 ]
 

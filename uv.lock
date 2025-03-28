@@ -44,7 +44,7 @@ dependencies = [
 ]
 
 [package.dev-dependencies]
-dev = [
+build = [
     { name = "nuitka" },
 ]
 
@@ -55,7 +55,7 @@ requires-dist = [
 ]
 
 [package.metadata.requires-dev]
-dev = [{ name = "nuitka", specifier = ">=2.6.8" }]
+build = [{ name = "nuitka", specifier = ">=2.6.8" }]
 
 [[package]]
 name = "nuitka"

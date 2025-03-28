@@ -36,7 +36,7 @@ jobs:
       - name: Build the project
         run: |
           .venv\Scripts\activate.ps1
-          python -m nuitka --onefile --onefile-no-compression --assume-yes-for-downloads --windows-console-mode=disable --output-dir=build --output-filename="geometry-game_${{ inputs.tag_name }}.exe" ./geometry_game/main.py
+          python -m nuitka --onefile --assume-yes-for-downloads --windows-console-mode=disable --output-dir=build --output-filename="geometry-game_${{ inputs.tag_name }}.exe" ./geometry_game/main.py
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2

@@ -1,5 +1,5 @@
 name: Build and Release
-run-name: release-${{ inputs.tag_name }}
+run-name: build-release-${{ inputs.tag_name }}
 
 on:
   workflow_dispatch:
@@ -23,6 +23,12 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version-file: "pyproject.toml"
+      
+      - name: Set Up venv
+        run: uv venv
+
+      - name: Use venv
+        run: .venv/Scripts/Activate.ps1
 
       - name: Install the project
         run: uv sync --all-groups

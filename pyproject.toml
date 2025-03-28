@@ -8,3 +8,9 @@ dependencies = [
     "numpy>=2.2.4",
     "pygame>=2.6.1",
 ]
+
+[tool.pdm.scripts]
+start = "geometry_game"
+
+[tool.uv]
+package = true

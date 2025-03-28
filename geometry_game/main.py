@@ -25,9 +25,6 @@ def main():
     screen = pygame.display.set_mode((WIDTH, HEIGHT))
     pygame.display.set_caption("3D Matrix Transformation")
 
-    # Font setup
-
-
     # Convert vertices to numpy array
     initial_vertices = np.array(INITIAL_VERTICES, dtype=float)
 

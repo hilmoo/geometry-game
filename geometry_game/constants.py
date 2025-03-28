@@ -3,17 +3,15 @@ WIDTH, HEIGHT = 1000, 700
 
 # Colors
 WHITE = (255, 255, 255)
-ACCENT_PRIMARY = (57, 255, 20) 
+ACCENT_PRIMARY = (57, 255, 20)
 TEXT_COLOR = (230, 230, 240)
 BUTTON_GLASS = (255, 255, 255, 50)  # Semi-transparent white
 BUTTON_BORDER = (255, 255, 255, 100)  # Border dengan sedikit transparansi
 HIGHLIGHT_COLOR = (70, 70, 100)
 TRANSFORM_COLORS = {
     "scale": (50, 200, 150),
-    "rotate_x": (250, 100, 100),
-    "rotate_y": (100, 150, 250),
-    "rotate_z": (200, 100, 250),
-    "translate": (250, 180, 50)
+    "rotate": (250, 100, 100),
+    "translate": (250, 180, 50),
 }
 BACKGROUND_GRADIENT = [(120, 40, 200), (50, 10, 120)]  # Warna gradien ungu
 RED = (255, 0, 0)

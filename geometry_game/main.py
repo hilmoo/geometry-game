@@ -9,6 +9,9 @@ from geometry_game.ui import (
     draw_background,
     PopupMenu,
     PopupForm,
+    TransformButton,
+    TransformDetailForm,
+    TransformListPopup,
 )
 from geometry_game.geometry import Transformation, project_point, transform_vertices
 from geometry_game.constants import (
@@ -42,12 +45,13 @@ def main():
     # Object state
     transformations = []
 
-    # UI Elements
-    add_transform_button = GlassButton(20, 20, 200, 50, "Add Transformation")
+    # UI Elements - swap positions
+    view_transforms_button = GlassButton(20, 20, 200, 50, "Applied Transformations")
+    add_transform_button = GlassButton(20, 80, 200, 50, "Add Transformation")
 
     # Transform popup menu
     transform_menu = PopupMenu(
-        20, 80, 200, ["Scale", "Rotate X", "Rotate Y", "Rotate Z", "Translate"]
+        20, 140, 200, ["Scale", "Rotate X", "Rotate Y", "Rotate Z", "Translate"]
     )
 
     # Transformation forms
@@ -119,6 +123,7 @@ def main():
     }
 
     current_popup_form = None
+    transform_list_popup = TransformListPopup(transformations)
 
     # Auto-rotation
     auto_rotate = True
@@ -129,29 +134,39 @@ def main():
             if event.type == pygame.QUIT:
                 running = False
 
-            # Add debug information for button click
+            # Add transform button click
             if add_transform_button.is_clicked(event):
-                print("Add transform button clicked!")  # Debug output
                 transform_menu.show()
+
+            # View transforms button click
+            if view_transforms_button.is_clicked(event):
+                transform_list_popup.update_transformations(transformations)
+                transform_list_popup.show()
 
             # Handle transform menu
             transform_option = transform_menu.handle_event(event)
             if transform_option:
-                print(f"Selected option: {transform_option}")  # Debug output
                 popup_forms[transform_option].show()
                 current_popup_form = transform_option
-                print(
-                    f"Showing form: {current_popup_form}, Visible: {popup_forms[transform_option].visible}"
-                )  # Debug
+
+            # Handle transforms list popup - simplified to handle direct delete
+            if transform_list_popup.visible:
+                list_result = transform_list_popup.handle_event(event)
+                if list_result:
+                    if list_result.get("action") == "delete":
+                        index = list_result.get("index")
+                        if 0 <= index < len(transformations):
+                            transformations.pop(index)
+                            # Update the list popup
+                            transform_list_popup.update_transformations(transformations)
+                    elif list_result.get("action") == "close":
+                        # Simply close the popup
+                        pass
 
             # Handle form popup
             if current_popup_form:
-                print(
-                    f"Current form: {current_popup_form}, Visible: {popup_forms[current_popup_form].visible}"
-                )  # Debug
                 form_result = popup_forms[current_popup_form].handle_event(event)
                 if form_result and form_result.get("action") == "apply":
-                    print(f"Form applied: {form_result}")  # Debug
                     values = form_result.get("values", {})
 
                     if current_popup_form == "Scale":
@@ -194,15 +209,9 @@ def main():
                         )
                         transformations.append(new_transform)
 
+                    # Update the list popup with new transformations
+                    transform_list_popup.update_transformations(transformations)
                     current_popup_form = None
-
-            # Delete transformation buttons
-            for i, transform in enumerate(transformations):
-                delete_button_rect = pygame.Rect(WIDTH - 40, 200 + i * 30, 30, 20)
-                if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-                    if delete_button_rect.collidepoint(event.pos):
-                        transformations.pop(i)
-                        break
 
             if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
                 auto_rotate = not auto_rotate
@@ -215,22 +224,11 @@ def main():
         # Drawing
         draw_background(screen)
 
-        # Draw regular UI elements first
+        # Draw UI buttons - swapped positions
+        view_transforms_button.draw(screen)
         add_transform_button.draw(screen)
 
-        # Draw transformations list
-        text_surf = main_font.render("Applied Transformations:", True, TEXT_COLOR)
-        screen.blit(text_surf, (20, 170))
-
-        for i, transform in enumerate(transformations):
-            text = f"{i+1}. {transform.get_display_text()}"
-            text_surf = main_font.render(text, True, TEXT_COLOR)
-            screen.blit(text_surf, (40, 200 + i * 30))
-
-            delete_button_rect = pygame.Rect(WIDTH - 40, 200 + i * 30, 30, 20)
-            pygame.draw.rect(screen, RED, delete_button_rect)
-            text_surf = main_font.render("X", True, WHITE)
-            screen.blit(text_surf, (WIDTH - 30, 200 + i * 30))
+        # Removed transformation count text
 
         # Apply transformations and render the 3D object
         auto_rotation = Transformation("rotate_y", {"angle": str(rotation_angle)})
@@ -266,11 +264,15 @@ def main():
         )
         screen.blit(help_text, (WIDTH - 300, HEIGHT - 50))
 
-        # Draw popups last to ensure they appear on top of everything else
+        # Draw popups last to ensure they appear on top
         transform_menu.draw(screen)
+        transform_list_popup.draw(screen)
 
         if current_popup_form and popup_forms[current_popup_form].visible:
             popup_forms[current_popup_form].draw(screen)
+
+        if transform_list_popup and transform_list_popup.visible:
+            transform_list_popup.draw(screen)
 
         pygame.display.flip()
         clock.tick(60)

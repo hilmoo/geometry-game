@@ -6,6 +6,8 @@ from geometry_game.constants import (
     BACKGROUND_GRADIENT,
     WIDTH,
     HEIGHT,
+    TRANSFORM_COLORS,
+    RED,
 )
 
 # Font setup
@@ -347,3 +349,329 @@ class PopupForm:
                 return {"action": "cancel"}
 
         return None
+
+
+class TransformButton(GlassButton):
+    def __init__(self, x, y, width, height, transform, index):
+        super().__init__(x, y, width, height, transform.get_display_text())
+        self.transform = transform
+        self.index = index
+        self.color = TRANSFORM_COLORS.get(transform.type.split("_")[0], (150, 150, 150))
+
+    def draw(self, surface):
+        mouse_pos = pygame.mouse.get_pos()
+        is_hovered = self.rect.collidepoint(mouse_pos)
+
+        button_color = (
+            (self.color[0], self.color[1], self.color[2], 120)
+            if is_hovered
+            else (self.color[0], self.color[1], self.color[2], 80)
+        )
+        border_color = (255, 255, 255, 180) if is_hovered else BUTTON_BORDER
+
+        button_surface = pygame.Surface(
+            (self.rect.width, self.rect.height), pygame.SRCALPHA
+        )
+        pygame.draw.rect(
+            button_surface,
+            button_color,
+            (0, 0, self.rect.width, self.rect.height),
+            border_radius=10,
+        )
+        pygame.draw.rect(
+            button_surface,
+            border_color,
+            (0, 0, self.rect.width, self.rect.height),
+            width=2,
+            border_radius=10,
+        )
+
+        surface.blit(button_surface, (self.rect.x, self.rect.y))
+
+        text_surf = main_font.render(f"{self.index+1}. {self.text}", True, WHITE)
+        text_rect = text_surf.get_rect(midleft=(self.rect.x + 15, self.rect.centery))
+        surface.blit(text_surf, text_rect)
+
+
+class TransformDetailForm(PopupForm):
+    def __init__(self, transform, transform_index):
+        self.transform = transform
+        self.transform_index = transform_index
+
+        # Create fields based on transform type and params
+        fields = []
+        for param_name, param_value in transform.params.items():
+            fields.append(
+                {
+                    "name": param_name,
+                    "label": f"{param_name.capitalize()}:",
+                    "placeholder": param_value,
+                    "value": param_value,
+                }
+            )
+
+        super().__init__(
+            f"Transformation Details: {transform.get_display_text()}", fields, "Close"
+        )
+
+        # Add delete button
+        self.delete_button = GlassButton(
+            self.x + 50, self.y + self.height - 50, 120, 40, "Delete"
+        )
+
+        # Reposition apply button (now "Close")
+        self.apply_button = GlassButton(
+            self.x + self.width - 170,
+            self.y + self.height - 50,
+            120,
+            40,
+            self.apply_text,
+        )
+
+    def draw(self, surface):
+        if not self.visible:
+            return
+
+        # Draw the form using parent method
+        super().draw(surface)
+
+        # Draw the additional delete button
+        self.delete_button.draw(surface)
+
+    def handle_event(self, event):
+        if not self.visible:
+            return None
+
+        # Check for delete button click
+        if self.delete_button.is_clicked(event):
+            result = {"action": "delete", "index": self.transform_index}
+            self.hide()
+            return result
+
+        # Handle other events with parent method
+        return super().handle_event(event)
+
+
+class TransformListPopup:
+    def __init__(self, transformations):
+        self.transformations = transformations
+        self.visible = False
+        self.just_opened = False
+        self.width = 500  # Slightly wider to accommodate delete buttons
+        # Dynamic height based on number of transformations (with min and max)
+        self.max_visible_items = 10
+        self.item_height = 40
+        self.padding = 20
+        self.title_height = 50
+
+        self._update_size_and_position()
+
+    def _update_size_and_position(self):
+        items_count = max(1, min(len(self.transformations), self.max_visible_items))
+        content_height = items_count * self.item_height
+        self.height = self.title_height + content_height + self.padding * 2
+
+        self.x = (WIDTH - self.width) // 2
+        self.y = (HEIGHT - self.height) // 2
+
+        # Calculate scrolling values if needed
+        self.total_content_height = len(self.transformations) * self.item_height
+        visible_content_height = self.max_visible_items * self.item_height
+        self.max_scroll = max(0, self.total_content_height - visible_content_height)
+        self.scroll_offset = 0
+
+    def update_transformations(self, transformations):
+        """Update transformation list and recalculate sizes"""
+        self.transformations = transformations
+        self._update_size_and_position()
+
+    def show(self):
+        self.visible = True
+        self.just_opened = True
+        self.scroll_offset = 0
+
+    def hide(self):
+        self.visible = False
+        self.just_opened = False
+
+    def handle_event(self, event):
+        if not self.visible:
+            return None
+
+        # Handle item delete button clicks
+        if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+            # Check for clicks on delete buttons
+            for i, transform in enumerate(self.transformations):
+                # Calculate position accounting for scroll
+                item_y = self.title_height + i * self.item_height - self.scroll_offset
+
+                # Only check if in visible area
+                if (
+                    item_y + self.item_height > self.title_height
+                    and item_y < self.height - self.padding
+                ):
+
+                    # Delete button position
+                    delete_btn_x = self.x + self.width - 50
+                    delete_btn_y = self.y + item_y + 10
+                    delete_btn_rect = pygame.Rect(delete_btn_x, delete_btn_y, 20, 20)
+
+                    if delete_btn_rect.collidepoint(event.pos):
+                        return {"action": "delete", "index": i}
+
+            # Scroll handling
+            if event.button == 4:  # Scroll up
+                self.scroll_offset = max(0, self.scroll_offset - 20)
+                return None
+            elif event.button == 5:  # Scroll down
+                self.scroll_offset = min(self.max_scroll, self.scroll_offset + 20)
+                return None
+
+            # Clear just_opened flag and check for outside click
+            if self.just_opened:
+                self.just_opened = False
+                return None
+
+            # Close if clicked outside
+            if not pygame.Rect(self.x, self.y, self.width, self.height).collidepoint(
+                event.pos
+            ):
+                self.hide()
+                return {"action": "close"}
+
+        return None
+
+    def draw(self, surface):
+        if not self.visible:
+            return
+
+        # Draw panel background - change to match popup menu style
+        panel_surface = pygame.Surface((self.width, self.height), pygame.SRCALPHA)
+        pygame.draw.rect(
+            panel_surface,
+            (30, 30, 60, 220),  # Match popup menu background
+            (0, 0, self.width, self.height),
+            border_radius=15,
+        )
+        pygame.draw.rect(
+            panel_surface,
+            (120, 120, 180, 180),
+            (0, 0, self.width, self.height),
+            width=2,
+            border_radius=15,
+        )
+
+        # Draw title
+        title_surf = title_font.render("Applied Transformations", True, WHITE)
+        title_rect = title_surf.get_rect(center=(self.width // 2, 25))
+        panel_surface.blit(title_surf, title_rect)
+
+        # Create a clip rect for the content area
+        content_rect = pygame.Rect(
+            self.padding,
+            self.title_height,
+            self.width - self.padding * 2,
+            self.height - self.title_height - self.padding,
+        )
+
+        # Set up clip area for scrolling content
+        panel_surface.set_clip(content_rect)
+
+        if not self.transformations:
+            # Show a message when there are no transformations
+            no_trans_surf = main_font.render(
+                "No transformations applied yet", True, WHITE
+            )
+            no_trans_rect = no_trans_surf.get_rect(
+                center=(self.width // 2, self.title_height + 20)
+            )
+            panel_surface.blit(no_trans_surf, no_trans_rect)
+        else:
+            # Draw transformations list
+            for i, transform in enumerate(self.transformations):
+                # Calculate position accounting for scroll
+                item_y = self.title_height + i * self.item_height - self.scroll_offset
+
+                # Only draw if in visible area
+                if (
+                    item_y + self.item_height > self.title_height
+                    and item_y < self.height - self.padding
+                ):
+
+                    # Draw item background using the menu background color instead of transparent
+                    item_bg = pygame.Rect(
+                        self.padding,
+                        item_y,
+                        self.width - self.padding * 2,
+                        self.item_height - 5,
+                    )
+                    pygame.draw.rect(
+                        panel_surface,
+                        (
+                            120,
+                            120,
+                            180,
+                            180,
+                        ),  # Changed from transparent to match menu border
+                        item_bg,
+                        border_radius=8,
+                    )
+
+                    # Draw item text
+                    text = f"{i+1}. {transform.get_display_text()}"
+                    text_surf = main_font.render(text, True, WHITE)
+                    panel_surface.blit(
+                        text_surf,
+                        (
+                            self.padding + 10,
+                            item_y + (self.item_height - text_surf.get_height()) // 2,
+                        ),
+                    )
+
+                    # Draw "X" delete button (no background)
+                    x_text = main_font.render("X", True, RED)
+                    x_rect = x_text.get_rect(
+                        center=(self.width - 40, item_y + self.item_height // 2)
+                    )
+                    panel_surface.blit(x_text, x_rect)
+
+        # Reset clip
+        panel_surface.set_clip(None)
+
+        # Draw the scrollbar if necessary
+        if self.transformations and self.total_content_height > (
+            self.height - self.title_height - self.padding * 2
+        ):
+            visible_ratio = min(
+                1.0,
+                (self.height - self.title_height - self.padding * 2)
+                / self.total_content_height,
+            )
+            scrollbar_height = max(
+                30,
+                int(
+                    visible_ratio * (self.height - self.title_height - self.padding * 2)
+                ),
+            )
+            scroll_ratio = (
+                self.scroll_offset / self.max_scroll if self.max_scroll > 0 else 0
+            )
+            scrollbar_y = self.title_height + int(
+                scroll_ratio
+                * (
+                    self.height
+                    - self.title_height
+                    - self.padding * 2
+                    - scrollbar_height
+                )
+            )
+
+            pygame.draw.rect(
+                panel_surface,
+                (180, 180, 220, 150),
+                (self.width - 15, scrollbar_y, 10, scrollbar_height),
+                border_radius=5,
+            )
+
+        # Blit the entire panel to main surface
+        surface.blit(panel_surface, (self.x, self.y))

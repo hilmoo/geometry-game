@@ -23,18 +23,18 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version-file: "pyproject.toml"
-      
-      - name: Set Up venv
-        run: uv venv
-
-      - name: Use venv
-        run: .venv/Scripts/Activate.ps1
 
       - name: Install the project
-        run: uv sync --all-groups
+        run: uv sync
 
-      - name: Build the project
-        run: nuitka --onefile --windows-console-mode=disable --output-dir=build --output-filename=geometry-game_${{ inputs.tag_name }}.exe ./geometry_game/
+      - uses: Nuitka/Nuitka-Action@main
+        with:
+          nuitka-version: main
+          script-name: ./geometry_game/
+          mode: onefile
+          output-dir: build
+          output-filename: geometry-game_${{ inputs.tag_name }}.exe
+          windows-console-mode: disable
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2

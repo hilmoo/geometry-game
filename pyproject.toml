@@ -10,11 +10,6 @@ dependencies = [
     "pygame>=2.6.1",
 ]
 
-[dependency-groups]
-build = [
-    "nuitka>=2.6.8",
-]
-
 [tool.pdm.scripts]
 start = "geometry_game"
 

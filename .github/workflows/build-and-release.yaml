@@ -33,7 +33,7 @@ jobs:
           script-name: ./geometry_game/
           mode: onefile
           output-dir: build
-          output-filename: geometry-game_${{ inputs.tag_name }}.exe
+          output-file: geometry-game_${{ inputs.tag_name }}.exe
           windows-console-mode: disable
 
       - name: Create GitHub Release

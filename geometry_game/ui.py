@@ -10,7 +10,7 @@ from geometry_game.constants import (
     RED,
 )
 
-# Font setup
+
 pygame.font.init()
 title_font = pygame.font.Font(None, 36)
 main_font = pygame.font.Font(None, 24)
@@ -27,8 +27,6 @@ def draw_background(surface):
 
 
 class GlassButton:
-    """A button with a semi-transparent glass-like appearance."""
-
     def __init__(self, x, y, width, height, text):
         self.rect = pygame.Rect(x, y, width, height)
         self.text = text
@@ -72,8 +70,6 @@ class GlassButton:
 
 
 class InputBox:
-    """A text input box with selection highlighting and numeric input focus."""
-
     def __init__(self, x, y, width, height, text="0", placeholder=""):
         self.rect = pygame.Rect(x, y, width, height)
         self.text = text if text else "0"
@@ -142,8 +138,6 @@ class InputBox:
 
 
 class PopupMenu:
-    """A popup menu that displays a list of selectable options."""
-
     def __init__(self, x, y, width, options):
         self.x = x
         self.y = y
@@ -223,8 +217,6 @@ class PopupMenu:
 
 
 class PopupForm:
-    """A form dialog that collects input values for transformations."""
-
     def __init__(self, title, fields, apply_text="Apply"):
         self.title = title
         self.fields = fields
@@ -334,7 +326,6 @@ class PopupForm:
         return None
 
     def reset_values(self):
-        """Reset all input boxes to their default values from fields definition"""
         for field in self.fields:
             field_name = field["name"]
             default_value = field.get("value", "0")
@@ -344,8 +335,6 @@ class PopupForm:
 
 
 class TransformListPopup:
-    """A popup that displays and manages the list of applied transformations."""
-
     def __init__(self, transformations):
         self.transformations = transformations
         self.visible = False

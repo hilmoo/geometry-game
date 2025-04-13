@@ -1,7 +1,6 @@
-# Window settings
 WIDTH, HEIGHT = 1000, 700
 
-# Colors
+
 WHITE = (255, 255, 255)
 ACCENT_PRIMARY = (57, 255, 20)
 TEXT_COLOR = (230, 230, 240)
@@ -17,7 +16,6 @@ BACKGROUND_GRADIENT = [(120, 40, 200), (50, 10, 120)]  # Warna gradien ungu
 RED = (255, 0, 0)
 
 
-# Camera settings
 CAMERA_DISTANCE = 5
 SCALE = 100
 
